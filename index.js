@@ -7,6 +7,9 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(cors()); // Enable CORS for external access
 
+// Unique Key (Keep this secret on the server side)
+const uniqueKey = "Password1012120824";
+
 // Encryption mapping
 const mapping = {
     'a': 'm', 'b': 'q', 'c': 'r', 'd': 'f', 'e': 'p',
@@ -29,15 +32,27 @@ const reverseMapping = Object.fromEntries(
     Object.entries(mapping).map(([key, value]) => [value, key])
 );
 
-// Encryption function
-const encrypt = (text) => text.split('').map(char => mapping[char] || char).join('');
+// Encryption function (with uniqueKey)
+const encrypt = (text) => {
+    const textWithKey = `${text},${uniqueKey}`; // Append uniqueKey
+    return textWithKey.split('').map(char => mapping[char] || char).join('');
+};
 
-// Decryption function
-const decrypt = (text) => text.split('').map(char => reverseMapping[char] || char).join('');
+// Decryption function (with uniqueKey verification)
+const decrypt = (text) => {
+    const decryptedText = text.split('').map(char => reverseMapping[char] || char).join('');
+
+    // Verify uniqueKey
+    if (!decryptedText.endsWith(`,${uniqueKey}`)) {
+        return "Invalid key or corrupted message";
+    }
+
+    return decryptedText.replace(`,${uniqueKey}`, '');
+};
 
 // Root endpoint
 app.get('/', (req, res) => {
-    res.json({ message: 'Welcome to the Encryption API' });
+    res.json({ message: 'Welcome to the Secure Encryption API' });
 });
 
 // Encrypt endpoint
